@@ -3,12 +3,14 @@
         var self = this;
         self.element = element;
         self.deny = false;
-        self.keySequence = [];
-        self.allowedSequences = [];
-        self.lastKeyDown = null;
-        self.lastKeyUp = null;
-        self.onSequenceCallbacks = [];
-        self.keypresscallbacks = [];
+        self.key_sequence = [];
+        self.allowed_sequences = [];
+        self.last_key_down = null;
+        self.last_key_up = null;
+        self.on_sequence_callbacks = [];
+        self.key_down_callbacks = [];
+        self.key_up_callbacks = [];
+        self.keys = [];
         self.initialize();
     };
 
@@ -22,36 +24,44 @@
 
     KeyReader.prototype.on = function (sequence, callback) {
         var self = this;
-        self.onSequenceCallbacks.push({
+        self.on_sequence_callbacks.push({
             sequence: sequence,
             callback: callback
         });
     };
 
-    KeyReader.prototype.keypress = function(key,callback){
+    KeyReader.prototype.keydown = function(key,callback){
         var self = this;
-        if(self.keypresscallbacks[key] === undefined){
-            self.keypresscallbacks[key] = [];
+        if(self.key_down_callbacks[key] === undefined){
+            self.key_down_callbacks[key] = [];
         }
-        self.keypresscallbacks[key].push(callback);
+        self.key_down_callbacks[key].push(callback);
+    };
+
+    KeyReader.prototype.keyup = function(key,callback){
+        var self = this;
+        if(self.key_up_callbacks[key] === undefined){
+            self.key_up_callbacks[key] = [];
+        }
+        self.key_up_callbacks[key].push(callback);
     };
 
     KeyReader.prototype.sequenceIs = function (sequence, ordered, exactLength) {
         var self = this;
         ordered = ordered === undefined ? false : ordered;
         exactLength = exactLength === undefined ? false : exactLength;
-        if (exactLength && sequence.length !== self.keySequence.length) {
+        if (exactLength && sequence.length !== self.key_sequence.length) {
             return false;
         }
 
         for (var i = 0; i < sequence.length; i++) {
             if (ordered) {
-                if (sequence[i] !== self.keySequence[i]) {
+                if (sequence[i] !== self.key_sequence[i]) {
                     return false;
                 }
             }
             else {
-                if (self.keySequence.indexOf(sequence[i]) === -1) {
+                if (self.key_sequence.indexOf(sequence[i]) === -1) {
                     return false;
                 }
             }
@@ -76,7 +86,7 @@
             if (!(sequence instanceof Array)) {
                 sequence = [sequence];
             }
-            self.allowedSequences.push(sequence);
+            self.allowed_sequences.push(sequence);
         }
     };
 
@@ -89,15 +99,17 @@
                 $(this).focus();
             });
             $(self.element).on('keydown',function (e) {
-                if (self.keySequence.indexOf(e.which) === -1) {
-                    self.keySequence.push(e.which);
+                var which = e.which;
+                self.keys[which] = true;
+                if (self.key_sequence.indexOf(which) === -1) {
+                    self.key_sequence.push(which);
                 }
 
                 if (self.deny) {
-                    var size = self.allowedSequences.length;
+                    var size = self.allowed_sequences.length;
                     var allowed = false;
                     for (var i = 0; i < size; i++) {
-                        var sequence = self.allowedSequences[i];
+                        var sequence = self.allowed_sequences[i];
                         if (self.sequenceIs(sequence, false, true)) {
                             allowed = true;
                         }
@@ -107,28 +119,30 @@
                     }
                 }
 
-                self.onSequenceCallbacks.forEach(function (sequence) {
+                self.on_sequence_callbacks.forEach(function (sequence) {
                     if (self.sequenceIs(sequence.sequence)) {
                         sequence.callback();
                     }
                 });
-            });
 
-            $(self.element).on('keyup',function (e) {
-                var index = self.keySequence.indexOf(e.which);
-                if (index !== -1) {
-                    self.keySequence.splice(index, 1);
+                if(self.key_down_callbacks[which] !== undefined){
+                    self.key_down_callbacks[which].forEach(function(callback){
+                        callback();
+                    });
                 }
             });
 
-            $(self.element).on('keypress',function(e){
+            $(self.element).on('keyup',function (e) {
                 var which = e.which;
-                console.log(which);
-                if(self.keypresscallbacks[which] !== undefined){
-                    var size = self.keypresscallbacks[which].length;
-                    for(var i = 0; i < size;i++){
-                        self.keypresscallbacks[which][i]();
-                    }
+                self.keys[which] = false;
+                var index = self.key_sequence.indexOf(which);
+                if (index !== -1) {
+                    self.key_sequence.splice(index, 1);
+                }
+                if(self.key_up_callbacks[which] !== undefined){
+                    self.key_up_callbacks[which].forEach(function(callback){
+                        callback();
+                    });
                 }
             });
         });
@@ -190,6 +204,11 @@
         KEY_ALT_GR: 18,
         KEY_SBL: 221,
         KEY_SBR: 220
+    };
+
+    KeyReader.prototype.isActive = function(key){
+       var self = this;
+       return self.keys[key] !== undefined && self.keys[key] === true;
     };
 
     window.KeyReader = KeyReader;
