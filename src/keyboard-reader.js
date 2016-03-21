@@ -8,6 +8,7 @@
         self.lastKeyDown = null;
         self.lastKeyUp = null;
         self.onSequenceCallbacks = [];
+        self.keypresscallbacks = [];
         self.initialize();
     };
 
@@ -25,6 +26,14 @@
             sequence: sequence,
             callback: callback
         });
+    };
+
+    KeyReader.prototype.keypress = function(key,callback){
+        var self = this;
+        if(self.keypresscallbacks[key] === undefined){
+            self.keypresscallbacks[key] = [];
+        }
+        self.keypresscallbacks[key].push(callback);
     };
 
     KeyReader.prototype.sequenceIs = function (sequence, ordered, exactLength) {
@@ -76,10 +85,10 @@
         $(document).ready(function () {
             console.log('key reader initialize...');
             $(self.element).attr('tabindex', 1);
-            $(self.element).click(function () {
+            $(self.element).on('click',function () {
                 $(this).focus();
             });
-            $(self.element).keydown(function (e) {
+            $(self.element).on('keydown',function (e) {
                 if (self.keySequence.indexOf(e.which) === -1) {
                     self.keySequence.push(e.which);
                 }
@@ -105,10 +114,21 @@
                 });
             });
 
-            $(self.element).keyup(function (e) {
+            $(self.element).on('keyup',function (e) {
                 var index = self.keySequence.indexOf(e.which);
                 if (index !== -1) {
                     self.keySequence.splice(index, 1);
+                }
+            });
+
+            $(self.element).on('keypress',function(e){
+                var which = e.which;
+                console.log(which);
+                if(self.keypresscallbacks[which] !== undefined){
+                    var size = self.keypresscallbacks[which].length;
+                    for(var i = 0; i < size;i++){
+                        self.keypresscallbacks[which][i]();
+                    }
                 }
             });
         });
