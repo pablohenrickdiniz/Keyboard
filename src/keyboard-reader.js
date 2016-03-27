@@ -24,6 +24,10 @@
 
     KeyReader.prototype.on = function (sequence, callback) {
         var self = this;
+        sequence = sequence.map = function(name){
+            return KeyReader.Keys[name];
+        };
+
         self.on_sequence_callbacks.push({
             sequence: sequence,
             callback: callback
@@ -206,9 +210,13 @@
         KEY_SBR: 220
     };
 
-    KeyReader.prototype.isActive = function(key){
+    KeyReader.prototype.isActive = function(name){
        var self = this;
-       return self.keys[key] !== undefined && self.keys[key] === true;
+       var key = KeyReader.Keys[name];
+       if(key !== undefined){
+           return self.keys[key] !== undefined && self.keys[key] === true;
+       }
+       return false;
     };
 
     window.KeyReader = KeyReader;
