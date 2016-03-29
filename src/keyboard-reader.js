@@ -149,6 +149,23 @@
                     });
                 }
             });
+
+            var exit_callback = function(){
+                self.keys.forEach(function(active,which){
+                    if(active){
+                        if(self.key_up_callbacks[which] !== undefined){
+                            self.key_up_callbacks[which].forEach(function(callback){
+                                callback();
+                            });
+                        }
+                        self.keys[which] = false;
+                    }
+                });
+            };
+
+            $(self.element).on('focusout',exit_callback);
+            $(window).resize(exit_callback);
+
         });
     };
 
@@ -211,12 +228,12 @@
     };
 
     KeyReader.prototype.isActive = function(name){
-       var self = this;
-       var key = KeyReader.Keys[name];
-       if(key !== undefined){
-           return self.keys[key] !== undefined && self.keys[key] === true;
-       }
-       return false;
+        var self = this;
+        var key = KeyReader.Keys[name];
+        if(key !== undefined){
+            return self.keys[key] !== undefined && self.keys[key] === true;
+        }
+        return false;
     };
 
     window.KeyReader = KeyReader;
