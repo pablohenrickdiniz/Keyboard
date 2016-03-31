@@ -24,9 +24,9 @@
 
     KeyReader.prototype.on = function (sequence, callback) {
         var self = this;
-        sequence = sequence.map = function(name){
+        sequence = sequence.map(function(name){
             return KeyReader.Keys[name];
-        };
+        });
 
         self.on_sequence_callbacks.push({
             sequence: sequence,
@@ -35,19 +35,25 @@
     };
 
     KeyReader.prototype.keydown = function(key,callback){
-        var self = this;
-        if(self.key_down_callbacks[key] === undefined){
-            self.key_down_callbacks[key] = [];
+        key = KeyReader.Keys[key];
+        if(key !== undefined){
+            var self = this;
+            if(self.key_down_callbacks[key] === undefined){
+                self.key_down_callbacks[key] = [];
+            }
+            self.key_down_callbacks[key].push(callback);
         }
-        self.key_down_callbacks[key].push(callback);
     };
 
     KeyReader.prototype.keyup = function(key,callback){
-        var self = this;
-        if(self.key_up_callbacks[key] === undefined){
-            self.key_up_callbacks[key] = [];
+        key = KeyReader.Keys[key];
+        if(key !== undefined){
+            var self = this;
+            if(self.key_up_callbacks[key] === undefined){
+                self.key_up_callbacks[key] = [];
+            }
+            self.key_up_callbacks[key].push(callback);
         }
-        self.key_up_callbacks[key].push(callback);
     };
 
     KeyReader.prototype.sequenceIs = function (sequence, ordered, exactLength) {
