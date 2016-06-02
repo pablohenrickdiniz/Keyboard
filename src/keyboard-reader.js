@@ -1,5 +1,5 @@
-(function(window){
-    var KeyReader = function (element) {
+(function(w){
+    var KeyboardReader = function (element) {
         var self = this;
         self.element = element;
         self.deny = false;
@@ -14,18 +14,18 @@
         self.initialize();
     };
 
-    KeyReader.prototype.key = function (name) {
-        if (KeyReader.Keys[name] !== undefined) {
-            return KeyReader.Keys[name];
+    KeyboardReader.prototype.key = function (name) {
+        if (KeyboardReader.Keys[name] !== undefined) {
+            return KeyboardReader.Keys[name];
         }
         return null;
     };
 
 
-    KeyReader.prototype.on = function (sequence, callback) {
+    KeyboardReader.prototype.on = function (sequence, callback) {
         var self = this;
         sequence = sequence.map(function(name){
-            return KeyReader.Keys[name];
+            return KeyboardReader.Keys[name];
         });
 
         self.on_sequence_callbacks.push({
@@ -34,8 +34,8 @@
         });
     };
 
-    KeyReader.prototype.keydown = function(key,callback){
-        key = KeyReader.Keys[key];
+    KeyboardReader.prototype.keydown = function(key,callback){
+        key = KeyboardReader.Keys[key];
         if(key !== undefined){
             var self = this;
             if(self.key_down_callbacks[key] === undefined){
@@ -45,8 +45,8 @@
         }
     };
 
-    KeyReader.prototype.keyup = function(key,callback){
-        key = KeyReader.Keys[key];
+    KeyboardReader.prototype.keyup = function(key,callback){
+        key = KeyboardReader.Keys[key];
         if(key !== undefined){
             var self = this;
             if(self.key_up_callbacks[key] === undefined){
@@ -56,7 +56,7 @@
         }
     };
 
-    KeyReader.prototype.sequenceIs = function (sequence, ordered, exactLength) {
+    KeyboardReader.prototype.sequenceIs = function (sequence, ordered, exactLength) {
         var self = this;
         ordered = ordered === undefined ? false : ordered;
         exactLength = exactLength === undefined ? false : exactLength;
@@ -80,15 +80,15 @@
         return true;
     };
 
-    KeyReader.prototype.denyAll = function () {
+    KeyboardReader.prototype.denyAll = function () {
         this.deny = true;
     };
 
-    KeyReader.prototype.allowAll = function () {
+    KeyboardReader.prototype.allowAll = function () {
         this.deny = false;
     };
 
-    KeyReader.prototype.allow = function () {
+    KeyboardReader.prototype.allow = function () {
         var self = this;
         var size = arguments.length;
         for (var i = 0; i < size; i++) {
@@ -100,7 +100,7 @@
         }
     };
 
-    KeyReader.prototype.initialize = function () {
+    KeyboardReader.prototype.initialize = function () {
         var self = this;
         $(document).ready(function () {
             console.log('key reader initialize...');
@@ -175,7 +175,7 @@
         });
     };
 
-    KeyReader.Keys = {
+    KeyboardReader.Keys = {
         KEY_GT:190,
         KEY_LT:188,
         KEY_DOWN: 40,
@@ -233,14 +233,14 @@
         KEY_SBR: 220
     };
 
-    KeyReader.prototype.isActive = function(name){
+    KeyboardReader.prototype.isActive = function(name){
         var self = this;
-        var key = KeyReader.Keys[name];
+        var key = KeyboardReader.Keys[name];
         if(key !== undefined){
             return self.keys[key] !== undefined && self.keys[key] === true;
         }
         return false;
     };
 
-    window.KeyReader = KeyReader;
+    w.KeyboardReader = KeyboardReader;
 })(window);
