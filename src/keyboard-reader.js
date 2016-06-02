@@ -1,6 +1,9 @@
 (function(w){
     var KeyboardReader = function (element) {
         var self = this;
+        if(!(element instanceof  Element)){
+            throw new TypeError('Elemento inválido');
+        }
         self.element = element;
         self.deny = false;
         self.key_sequence = [];
@@ -102,77 +105,90 @@
 
     KeyboardReader.prototype.initialize = function () {
         var self = this;
-        $(document).ready(function () {
-            console.log('key reader initialize...');
-            $(self.element).attr('tabindex', 1);
-            $(self.element).on('click',function () {
-                $(this).focus();
+        self.click_event = function(){
+            self.element.focus();
+        };
+
+        self.keydown_event = function (e) {
+            var which = e.which;
+            self.keys[which] = true;
+            if (self.key_sequence.indexOf(which) === -1) {
+                self.key_sequence.push(which);
+            }
+
+            if (self.deny) {
+                var size = self.allowed_sequences.length;
+                var allowed = false;
+                for (var i = 0; i < size; i++) {
+                    var sequence = self.allowed_sequences[i];
+                    if (self.sequenceIs(sequence, false, true)) {
+                        allowed = true;
+                    }
+                }
+                if (!allowed) {
+                    e.preventDefault();
+                }
+            }
+
+            self.on_sequence_callbacks.forEach(function (sequence) {
+                if (self.sequenceIs(sequence.sequence)) {
+                    sequence.callback();
+                }
             });
-            $(self.element).on('keydown',function (e) {
-                var which = e.which;
-                self.keys[which] = true;
-                if (self.key_sequence.indexOf(which) === -1) {
-                    self.key_sequence.push(which);
-                }
 
-                if (self.deny) {
-                    var size = self.allowed_sequences.length;
-                    var allowed = false;
-                    for (var i = 0; i < size; i++) {
-                        var sequence = self.allowed_sequences[i];
-                        if (self.sequenceIs(sequence, false, true)) {
-                            allowed = true;
-                        }
-                    }
-                    if (!allowed) {
-                        e.preventDefault();
-                    }
-                }
-
-                self.on_sequence_callbacks.forEach(function (sequence) {
-                    if (self.sequenceIs(sequence.sequence)) {
-                        sequence.callback();
-                    }
+            if(self.key_down_callbacks[which] !== undefined){
+                self.key_down_callbacks[which].forEach(function(callback){
+                    callback();
                 });
+            }
+        };
 
-                if(self.key_down_callbacks[which] !== undefined){
-                    self.key_down_callbacks[which].forEach(function(callback){
-                        callback();
-                    });
-                }
-            });
-
-            $(self.element).on('keyup',function (e) {
-                var which = e.which;
-                self.keys[which] = false;
-                var index = self.key_sequence.indexOf(which);
-                if (index !== -1) {
-                    self.key_sequence.splice(index, 1);
-                }
-                if(self.key_up_callbacks[which] !== undefined){
-                    self.key_up_callbacks[which].forEach(function(callback){
-                        callback();
-                    });
-                }
-            });
-
-            var exit_callback = function(){
-                self.keys.forEach(function(active,which){
-                    if(active){
-                        if(self.key_up_callbacks[which] !== undefined){
-                            self.key_up_callbacks[which].forEach(function(callback){
-                                callback();
-                            });
-                        }
-                        self.keys[which] = false;
-                    }
+        self.keyup_event = function (e) {
+            var which = e.which;
+            self.keys[which] = false;
+            var index = self.key_sequence.indexOf(which);
+            if (index !== -1) {
+                self.key_sequence.splice(index, 1);
+            }
+            if(self.key_up_callbacks[which] !== undefined){
+                self.key_up_callbacks[which].forEach(function(callback){
+                    callback();
                 });
-            };
+            }
+        };
 
-            $(self.element).on('focusout',exit_callback);
-            $(window).resize(exit_callback);
+        self.fousout_event = function(){
+            self.keys.forEach(function(active,which){
+                if(active){
+                    if(self.key_up_callbacks[which] !== undefined){
+                        self.key_up_callbacks[which].forEach(function(callback){
+                            callback();
+                        });
+                    }
+                    self.keys[which] = false;
+                }
+            });
+        };
 
-        });
+        self.element.setAttribute('tabindex',1);
+        self.element.addEventListener("click",self.click_event);
+        self.element.addEventListener("keydown",self.keydown_event);
+        self.element.addEventListener("keyup",self.keyup_event);
+        self.element.addEventListener("focusout",self.fousout_event);
+        window.addEventListener("resize",self.fousout_event);
+    };
+
+    KeyboardReader.prototype.setElement = function(element){
+        var self= this;
+        if(element instanceof  Element && element != self.element){
+            self.element.removeEventListener("click",self.click_event);
+            self.element.removeEventListener("keydown",self.keydown_event);
+            self.element.removeEventListener("keyup",self.keyup_event);
+            self.element.removeEventListener("focusout",self.fousout_event);
+            window.removeEventListener("resize",self.fousout_event);
+            self.element = element;
+            self.initialize();
+        }
     };
 
     KeyboardReader.Keys = {
