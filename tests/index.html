@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Keyboard Test</title>
+        <style type="text/css">
+            #keyboard{
+                width:500px;
+                height:500px;
+                border:1px solid black;
+            }
+        </style>
+        <script type="text/javascript" src="../src/Keyboard.js"></script>
+        <script type="text/javascript">
+            function start() {
+                var element = document.getElementById('keyboard');
+                var shortcut_text = document.getElementById('shortcut');
+                var keyboard = new Keyboard(element);
+                keyboard.addShortcutListener('A+B+C+D',function(){
+                    console.log('CTRL callback!');
+                });
+                keyboard.addStateChangeListener(function(){
+                    shortcut_text.innerHTML = keyboard.getCurrentShortcut();
+                });
+            }
+        </script>
+</head>
+<body onload="start()">
+<div id="keyboard">
+
+</div>
+<div id="shortcut">
+
+</div>
+</body>
+</html>
