@@ -268,19 +268,16 @@
             }
         };
 
-        self.blur_event = function () {
+        self.blur_event = function (e) {
+            e.preventDefault();
             var keys = Object.keys(self.state);
             var length = keys.length;
             var i;
             var key;
-            var code;
 
             for (i = 0; i < length; i++) {
                 key = keys[i];
-                code = letter_codes[key];
-                if (self.state[code]) {
-                    self.state[code] = false;
-                }
+                self.state[key] = false;
             }
 
             self.key_sequence = [];
@@ -289,6 +286,7 @@
                 self.state_change_callbacks[i]();
             }
         };
+
         bind.apply(this);
     };
 
