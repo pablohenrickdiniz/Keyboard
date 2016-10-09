@@ -51,6 +51,10 @@
         F6: 117,
         F7: 118,
         F8: 119,
+        F19:120,
+        F10:121,
+        F11:122,
+        F12:123,
         LT: 188,
         GT: 190,
         SBR: 220,
@@ -71,29 +75,29 @@
         9: [57, 150]
     };
 
-    var isNumericCode = function(code){
-        for(var i =0; i <= 9;i++){
-            if(numeric_codes[i].indexOf(code) != -1){
+    var isNumericCode = function (code) {
+        for (var i = 0; i <= 9; i++) {
+            if (numeric_codes[i].indexOf(code) != -1) {
                 return true;
             }
         }
         return false;
     };
 
-    var getCodeNumber = function(code){
-        for(var i =0; i <= 9;i++){
+    var getCodeNumber = function (code) {
+        for (var i = 0; i <= 9; i++) {
             var index = numeric_codes[i].indexOf(code);
-            if(index != -1){
+            if (index != -1) {
                 return i;
             }
         }
         return null;
     };
 
-    var sequenceContainsNumeric = function(code,sequence){
+    var sequenceContainsNumeric = function (code, sequence) {
         var length = sequence.length;
-        for(i = 0; i < length;i++){
-            if(getCodeNumber(sequence[i]) == getCodeNumber(code)){
+        for (i = 0; i < length; i++) {
+            if (getCodeNumber(sequence[i]) == getCodeNumber(code)) {
                 return true;
             }
         }
@@ -111,7 +115,7 @@
         var length = shortcut.length;
         var i;
         for (i = 0; i < length; i++) {
-            if(numeric_codes[shortcut[i]] != undefined){
+            if (numeric_codes[shortcut[i]] != undefined) {
                 keySequence.push(numeric_codes[shortcut[i]]);
             }
             else if (letter_keys.indexOf(shortcut[i]) != -1) {
@@ -133,9 +137,9 @@
             }
         }
 
-        for(i =0; i <= 9;i++){
-            if(numeric_codes[i].indexOf(code) != -1){
-                return i+'';
+        for (i = 0; i <= 9; i++) {
+            if (numeric_codes[i].indexOf(code) != -1) {
+                return i + '';
             }
         }
 
@@ -165,7 +169,7 @@
         }
 
         for (i = 0; i < lengthA && i < lengthB; i++) {
-            if(((isNumericCode(shortcutA[i]) || isNumericCode(shortcutB[i])) && (getCodeNumber(shortcutA[i]) != getCodeNumber(shortcutB[i])) || shortcutA[i] != shortcutB[i])){
+            if (((isNumericCode(shortcutA[i]) || isNumericCode(shortcutB[i])) && (getCodeNumber(shortcutA[i]) != getCodeNumber(shortcutB[i])) || shortcutA[i] != shortcutB[i])) {
                 return false;
             }
         }
@@ -186,36 +190,75 @@
         return -1;
     };
 
-
-    var bind = function(){
-        var self = this;
-        self.element.setAttribute('tabindex', 1);
-        self.element.addEventListener('click', self.click_event);
-        self.element.addEventListener('keydown', self.keydown_event);
-        self.element.addEventListener('keyup', self.keyup_event);
-        self.element.addEventListener('blur', self.blur_event);
+    /**
+     *
+     * @param self
+     * @param element
+     */
+    function bind(self,element) {
+        if(element != null){
+            element.setAttribute('tabindex', 1);
+            element.addEventListener('click', self.click_event);
+            element.addEventListener('keydown', self.keydown_event);
+            element.addEventListener('keyup', self.keyup_event);
+            element.addEventListener('blur', self.blur_event);
+        }
         w.addEventListener('blur', self.blur_event);
-    };
+    }
 
-    var unbind = function(){
-        var self = this;
-        self.element.removeEventListener('click', self.click_event);
-        self.element.removeEventListener('keydown', self.keydown_event);
-        self.element.removeEventListener('keypress', self.keydown_event);
-        self.element.removeEventListener('keyup', self.keyup_event);
-        self.element.removeEventListener('blur', self.blur_event);
+    /**
+     *
+     * @param self
+     * @param element
+     */
+    function unbind(self,element) {
+        if(element != null){
+            element.removeEventListener('click', self.click_event);
+            element.removeEventListener('keydown', self.keydown_event);
+            element.removeEventListener('keypress', self.keydown_event);
+            element.removeEventListener('keyup', self.keyup_event);
+            element.removeEventListener('blur', self.blur_event);
+        }
         window.removeEventListener('blur', self.blur_event);
-    };
+    }
 
-    var initialize = function () {
-        var self = this;
+    /**
+     *
+     * @param self
+     */
+    function initialize(self) {
+        var element = null;
+
+        Object.defineProperty(self, 'element', {
+            get: function () {
+                return element;
+            },
+            set: function (e) {
+                if (e instanceof  Element && element != e) {
+                    unbind(self,element);
+                    element = e;
+                    bind(self,element);
+                }
+            }
+        });
+
+
+        Object.defineProperty(self,'currentShortcut',{
+            get:function(){
+                return keySequenceToShortcut(self.key_sequence)
+            }
+        });
+
         self.click_event = function () {
             self.element.focus();
         };
 
         self.keydown_event = function (e) {
             var which = e.which;
-            e.preventDefault();
+            if(self.propagate.indexOf(which) == -1){
+                e.preventDefault();
+            }
+
             if (self.state[which] != true) {
                 self.state[which] = true;
                 var i;
@@ -223,20 +266,20 @@
 
                 var changed = false;
 
-                if(isNumericCode(which)){
-                    if(!sequenceContainsNumeric(which,self.key_sequence)){
+                if (isNumericCode(which)) {
+                    if (!sequenceContainsNumeric(which, self.key_sequence)) {
                         self.key_sequence.push(which);
                         changed = true;
                     }
                 }
-                else{
+                else {
                     if (self.key_sequence.indexOf(which) === -1) {
                         self.key_sequence.push(which);
                         changed = true;
                     }
                 }
 
-                if(changed){
+                if (changed) {
                     length = self.state_change_callbacks.length;
                     for (i = 0; i < length; i++) {
                         self.state_change_callbacks[i]();
@@ -287,20 +330,18 @@
             }
         };
 
-        bind.apply(this);
-    };
+        bind(self,element);
+    }
 
-    var Keyboard = function (element) {
+    var Keyboard = function (options) {
         var self = this;
-        if (!(element instanceof  Element)) {
-            throw new TypeError('Invalid Element!');
-        }
-        self.element = element;
+        initialize(self);
+        self.element = options.element || null;
         self.key_sequence = [];
         self.shortcut_callbacks = [];
         self.state_change_callbacks = [];
         self.state = {};
-        initialize.apply(self);
+        self.propagate = options.propagate || [];
     };
 
     var keys = Object.keys(letter_codes);
@@ -355,20 +396,6 @@
         if (index != -1) {
             self.state_change_callbacks.splice(index, 1);
         }
-    };
-
-    Keyboard.prototype.setElement = function (element) {
-        var self = this;
-        if (element instanceof  Element && element != self.element) {
-            unbind().apply(this);
-            self.element = element;
-            bind.apply(self);
-        }
-    };
-
-    Keyboard.prototype.getCurrentShortcut = function () {
-        var self = this;
-        return keySequenceToShortcut(self.key_sequence)
     };
 
     w.Keyboard = Keyboard;
