@@ -15,12 +15,12 @@
             function start() {
                 var element = document.getElementById('keyboard');
                 var shortcut_text = document.getElementById('shortcut');
-                var keyboard = new Keyboard(element);
-                keyboard.addShortcutListener('A+B+C+D',function(){
-                    console.log('CTRL callback!');
+                var keyboard = new Keyboard({
+                    element:element,
+                    propagate:[Keyboard.F11]
                 });
                 keyboard.addStateChangeListener(function(){
-                    shortcut_text.innerHTML = keyboard.getCurrentShortcut();
+                    shortcut_text.innerHTML = keyboard.currentShortcut;
                 });
             }
         </script>
