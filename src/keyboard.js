@@ -75,16 +75,26 @@
         9: [57, 150]
     };
 
-    var isNumericCode = function (code) {
+    /**
+     *
+     * @param code
+     * @returns {boolean}
+     */
+    function isNumericCode(code) {
         for (var i = 0; i <= 9; i++) {
             if (numeric_codes[i].indexOf(code) != -1) {
                 return true;
             }
         }
         return false;
-    };
+    }
 
-    var getCodeNumber = function (code) {
+    /**
+     *
+     * @param code
+     * @returns {*}
+     */
+    function getCodeNumber (code) {
         for (var i = 0; i <= 9; i++) {
             var index = numeric_codes[i].indexOf(code);
             if (index != -1) {
@@ -92,9 +102,15 @@
             }
         }
         return null;
-    };
+    }
 
-    var sequenceContainsNumeric = function (code, sequence) {
+    /**
+     *
+     * @param code
+     * @param sequence
+     * @returns {boolean}
+     */
+    function sequenceContainsNumeric(code, sequence) {
         var length = sequence.length;
         for (i = 0; i < length; i++) {
             if (getCodeNumber(sequence[i]) == getCodeNumber(code)) {
@@ -102,13 +118,23 @@
             }
         }
         return false;
-    };
+    }
 
-    var cleanShortcut = function (string) {
+    /**
+     *
+     * @param string
+     * @returns {string}
+     */
+    function  cleanShortcut(string) {
         return string.replace(/\s/g, '').toUpperCase();
-    };
+    }
 
-    var shortcutToKeycode = function (shortcut) {
+    /**
+     *
+     * @param shortcut
+     * @returns {Array}
+     */
+    function shortcutToKeycode(shortcut) {
         var keySequence = [];
         var letter_keys = Object.keys(letter_codes);
         shortcut = shortcut.split('+');
@@ -123,9 +149,14 @@
             }
         }
         return keySequence;
-    };
+    }
 
-    var keyCodeToName = function (code) {
+    /**
+     *
+     * @param code
+     * @returns {*}
+     */
+    function keyCodeToName(code) {
         var keys = Object.keys(letter_codes);
         var length = keys.length;
         var i;
@@ -144,9 +175,14 @@
         }
 
         return null;
-    };
+    }
 
-    var keySequenceToShortcut = function (keySequence) {
+    /**
+     *
+     * @param keySequence
+     * @returns {string}
+     */
+    function keySequenceToShortcut(keySequence) {
         var lengthB = keySequence.length;
         var i;
         var shortcut = [];
@@ -158,9 +194,15 @@
         }
 
         return shortcut.join('+');
-    };
+    }
 
-    var compareShortcut = function (shortcutA, shortcutB) {
+    /**
+     *
+     * @param shortcutA
+     * @param shortcutB
+     * @returns {boolean}
+     */
+    function compareShortcut(shortcutA, shortcutB) {
         var lengthA = shortcutA.length;
         var lengthB = shortcutB.length;
 
@@ -175,9 +217,15 @@
         }
 
         return true;
-    };
+    }
 
-    var indexOfShortcut = function (sca, array) {
+    /**
+     *
+     * @param sca
+     * @param array
+     * @returns {number}
+     */
+    function indexOfShortcut(sca, array) {
         var length = array.length;
         var scb = null;
 
@@ -188,39 +236,9 @@
             }
         }
         return -1;
-    };
-
-    /**
-     *
-     * @param self
-     * @param element
-     */
-    function bind(self,element) {
-        if(element != null){
-            element.setAttribute('tabindex', 1);
-            element.addEventListener('click', self.click_event);
-            element.addEventListener('keydown', self.keydown_event);
-            element.addEventListener('keyup', self.keyup_event);
-            element.addEventListener('blur', self.blur_event);
-        }
-        w.addEventListener('blur', self.blur_event);
     }
 
-    /**
-     *
-     * @param self
-     * @param element
-     */
-    function unbind(self,element) {
-        if(element != null){
-            element.removeEventListener('click', self.click_event);
-            element.removeEventListener('keydown', self.keydown_event);
-            element.removeEventListener('keypress', self.keydown_event);
-            element.removeEventListener('keyup', self.keyup_event);
-            element.removeEventListener('blur', self.blur_event);
-        }
-        window.removeEventListener('blur', self.blur_event);
-    }
+
 
     /**
      *
@@ -235,9 +253,9 @@
             },
             set: function (e) {
                 if (e instanceof  Element && element != e) {
-                    unbind(self,element);
+                    self.unbind();
                     element = e;
-                    bind(self,element);
+                    self.bind();
                 }
             }
         });
@@ -280,15 +298,15 @@
                 }
 
                 if (changed) {
-                    length = self.state_change_callbacks.length;
+                    length = self.state_change_listeners.length;
                     for (i = 0; i < length; i++) {
-                        self.state_change_callbacks[i]();
+                        self.state_change_listeners[i]();
                     }
                 }
 
-                length = self.shortcut_callbacks.length;
+                length = self.shortcut_listeners.length;
                 for (i = 0; i < length; i++) {
-                    var shortcut_callback = self.shortcut_callbacks[i];
+                    var shortcut_callback = self.shortcut_listeners[i];
                     if (compareShortcut(shortcut_callback.shortcut, self.key_sequence)) {
                         shortcut_callback.callback();
                     }
@@ -303,10 +321,10 @@
             var index = self.key_sequence.indexOf(which);
             if (index !== -1) {
                 self.key_sequence.splice(index, 1);
-                var length = self.state_change_callbacks.length;
+                var length = self.state_change_listeners.length;
                 var i;
                 for (i = 0; i < length; i++) {
-                    self.state_change_callbacks[i]();
+                    self.state_change_listeners[i]();
                 }
             }
         };
@@ -324,13 +342,13 @@
             }
 
             self.key_sequence = [];
-            length = self.state_change_callbacks.length;
+            length = self.state_change_listeners.length;
             for (i = 0; i < length; i++) {
-                self.state_change_callbacks[i]();
+                self.state_change_listeners[i]();
             }
         };
 
-        bind(self,element);
+        self.bind();
     }
 
     var Keyboard = function (options) {
@@ -338,8 +356,8 @@
         initialize(self);
         self.element = options.element || null;
         self.key_sequence = [];
-        self.shortcut_callbacks = [];
-        self.state_change_callbacks = [];
+        self.shortcut_listeners = [];
+        self.state_change_listeners = [];
         self.state = {};
         self.propagate = options.propagate || [];
     };
@@ -363,8 +381,8 @@
             callback: callback
         };
 
-        if (indexOfShortcut(sc, self.shortcut_callbacks) == -1) {
-            self.shortcut_callbacks.push(sc);
+        if (indexOfShortcut(sc, self.shortcut_listeners) == -1) {
+            self.shortcut_listeners.push(sc);
         }
         else {
             console.error('This callback is already registered with shortcut \'' + str + '\'');
@@ -377,25 +395,53 @@
             shortcut: shortcut,
             callback: callback
         };
-        var index = indexOfShortcut(sc, self.shortcut_callbacks);
+        var index = indexOfShortcut(sc, self.shortcut_listeners);
         if (index != -1) {
-            self.shortcut_callbacks.splice(index, 1);
+            self.shortcut_listeners.splice(index, 1);
         }
     };
 
     Keyboard.prototype.addStateChangeListener = function (callback) {
         var self = this;
-        if (self.state_change_callbacks.indexOf(callback) == -1) {
-            self.state_change_callbacks.push(callback);
+        if (self.state_change_listeners.indexOf(callback) == -1) {
+            self.state_change_listeners.push(callback);
         }
     };
 
     Keyboard.prototype.removeStateChangeListener = function (callback) {
         var self = this;
-        var index = self.state_change_callbacks.indexOf(callback);
+        var index = self.state_change_listeners.indexOf(callback);
         if (index != -1) {
-            self.state_change_callbacks.splice(index, 1);
+            self.state_change_listeners.splice(index, 1);
         }
+    };
+
+    Keyboard.prototype.unbind = function(){
+        var self = this;
+        var element = self.element;
+        if(element != null){
+            element.removeEventListener('click', self.click_event);
+            element.removeEventListener('keydown', self.keydown_event);
+           // element.removeEventListener('keypress', self.keydown_event);
+            element.removeEventListener('keyup', self.keyup_event);
+            element.removeEventListener('blur', self.blur_event);
+        }
+        w.removeEventListener('blur', self.blur_event);
+    };
+
+    Keyboard.prototype.bind = function(){
+        var self = this;
+        self.unbind();
+        var element = self.element;
+        if(element != null){
+            element.setAttribute('tabindex', 1);
+            element.addEventListener('click', self.click_event);
+            element.addEventListener('keydown', self.keydown_event);
+           //element.addEventListener('keypress', self.keydown_event);
+            element.addEventListener('keyup', self.keyup_event);
+            element.addEventListener('blur', self.blur_event);
+        }
+        w.addEventListener('blur', self.blur_event);
     };
 
     w.Keyboard = Keyboard;
