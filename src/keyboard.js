@@ -1,5 +1,6 @@
+'use strict';
 (function (w) {
-    var letter_codes = {
+    let letter_codes = {
         BACK_TAB: 8,
         TAB: 9,
         ENTER: 13,
@@ -61,7 +62,7 @@
         SBL: 221
     };
 
-    var numeric_codes =
+    let numeric_codes =
     {
         0: [48, 96],
         1: [49, 97],
@@ -81,8 +82,8 @@
      * @returns {boolean}
      */
     function isNumericCode(code) {
-        for (var i = 0; i <= 9; i++) {
-            if (numeric_codes[i].indexOf(code) != -1) {
+        for (let i = 0; i <= 9; i++) {
+            if (numeric_codes[i].indexOf(code) !== -1) {
                 return true;
             }
         }
@@ -95,9 +96,9 @@
      * @returns {*}
      */
     function getCodeNumber (code) {
-        for (var i = 0; i <= 9; i++) {
-            var index = numeric_codes[i].indexOf(code);
-            if (index != -1) {
+        for (let i = 0; i <= 9; i++) {
+            let index = numeric_codes[i].indexOf(code);
+            if (index !== -1) {
                 return i;
             }
         }
@@ -111,9 +112,9 @@
      * @returns {boolean}
      */
     function sequenceContainsNumeric(code, sequence) {
-        var length = sequence.length;
+        let length = sequence.length;
         for (i = 0; i < length; i++) {
-            if (getCodeNumber(sequence[i]) == getCodeNumber(code)) {
+            if (getCodeNumber(sequence[i]) === getCodeNumber(code)) {
                 return true;
             }
         }
@@ -135,16 +136,16 @@
      * @returns {Array}
      */
     function shortcutToKeycode(shortcut) {
-        var keySequence = [];
-        var letter_keys = Object.keys(letter_codes);
+        let keySequence = [];
+        let letter_keys = Object.keys(letter_codes);
         shortcut = shortcut.split('+');
-        var length = shortcut.length;
-        var i;
+        let length = shortcut.length;
+        let i;
         for (i = 0; i < length; i++) {
-            if (numeric_codes[shortcut[i]] != undefined) {
+            if (numeric_codes[shortcut[i]] !== undefined) {
                 keySequence.push(numeric_codes[shortcut[i]]);
             }
-            else if (letter_keys.indexOf(shortcut[i]) != -1) {
+            else if (letter_keys.indexOf(shortcut[i]) !== -1) {
                 keySequence.push(letter_codes[shortcut[i]]);
             }
         }
@@ -157,19 +158,19 @@
      * @returns {*}
      */
     function keyCodeToName(code) {
-        var keys = Object.keys(letter_codes);
-        var length = keys.length;
-        var i;
-        var key;
+        let keys = Object.keys(letter_codes);
+        let length = keys.length;
+        let i;
+        let key;
         for (i = 0; i < length; i++) {
             key = keys[i];
-            if (letter_codes[key] == code) {
+            if (letter_codes[key] === code) {
                 return key;
             }
         }
 
         for (i = 0; i <= 9; i++) {
-            if (numeric_codes[i].indexOf(code) != -1) {
+            if (numeric_codes[i].indexOf(code) !== -1) {
                 return i + '';
             }
         }
@@ -183,11 +184,11 @@
      * @returns {string}
      */
     function keySequenceToShortcut(keySequence) {
-        var lengthB = keySequence.length;
-        var i;
-        var shortcut = [];
+        let lengthB = keySequence.length;
+        let i;
+        let shortcut = [];
         for (i = 0; i < lengthB; i++) {
-            var keyName = keyCodeToName(keySequence[i]);
+            let keyName = keyCodeToName(keySequence[i]);
             if (keyName != null) {
                 shortcut.push(keyName);
             }
@@ -203,15 +204,15 @@
      * @returns {boolean}
      */
     function compareShortcut(shortcutA, shortcutB) {
-        var lengthA = shortcutA.length;
-        var lengthB = shortcutB.length;
+        let lengthA = shortcutA.length;
+        let lengthB = shortcutB.length;
 
-        if (lengthA != lengthB) {
+        if (lengthA !== lengthB) {
             return false;
         }
 
         for (i = 0; i < lengthA && i < lengthB; i++) {
-            if (((isNumericCode(shortcutA[i]) || isNumericCode(shortcutB[i])) && (getCodeNumber(shortcutA[i]) != getCodeNumber(shortcutB[i])) || shortcutA[i] != shortcutB[i])) {
+            if (((isNumericCode(shortcutA[i]) || isNumericCode(shortcutB[i])) && (getCodeNumber(shortcutA[i]) !== getCodeNumber(shortcutB[i])) || shortcutA[i] !== shortcutB[i])) {
                 return false;
             }
         }
@@ -226,33 +227,31 @@
      * @returns {number}
      */
     function indexOfShortcut(sca, array) {
-        var length = array.length;
-        var scb = null;
+        let length = array.length;
+        let scb = null;
 
         for (i = 0; i < length; i++) {
             scb = array[i];
-            if (sca.callback == scb.callback && compareShortcut(sca.shortcut, scb.shortcut)) {
+            if (sca.callback === scb.callback && compareShortcut(sca.shortcut, scb.shortcut)) {
                 return i;
             }
         }
         return -1;
     }
 
-
-
     /**
      *
      * @param self
      */
     function initialize(self) {
-        var element = null;
+        let element = null;
 
         Object.defineProperty(self, 'element', {
             get: function () {
                 return element;
             },
             set: function (e) {
-                if (e instanceof  Element && element != e) {
+                if (e instanceof  Element && element !== e) {
                     self.unbind();
                     element = e;
                     self.bind();
@@ -260,8 +259,11 @@
             }
         });
 
-
         Object.defineProperty(self,'currentShortcut',{
+            /**
+             *
+             * @returns {string}
+             */
             get:function(){
                 return keySequenceToShortcut(self.key_sequence)
             }
@@ -272,17 +274,17 @@
         };
 
         self.keydown_event = function (e) {
-            var which = e.which;
-            if(self.propagate.indexOf(which) == -1){
+            let which = e.which;
+            if(self.propagate.indexOf(which) === -1){
                 e.preventDefault();
             }
 
-            if (self.state[which] != true) {
+            if (self.state[which] !== true) {
                 self.state[which] = true;
-                var i;
-                var length;
+                let i;
+                let length;
 
-                var changed = false;
+                let changed = false;
 
                 if (isNumericCode(which)) {
                     if (!sequenceContainsNumeric(which, self.key_sequence)) {
@@ -306,7 +308,7 @@
 
                 length = self.shortcut_listeners.length;
                 for (i = 0; i < length; i++) {
-                    var shortcut_callback = self.shortcut_listeners[i];
+                    let shortcut_callback = self.shortcut_listeners[i];
                     if (compareShortcut(shortcut_callback.shortcut, self.key_sequence)) {
                         shortcut_callback.callback();
                     }
@@ -315,14 +317,14 @@
         };
 
         self.keyup_event = function (e) {
-            var which = e.which;
+            let which = e.which;
             e.preventDefault();
             self.state[which] = false;
-            var index = self.key_sequence.indexOf(which);
+            let index = self.key_sequence.indexOf(which);
             if (index !== -1) {
                 self.key_sequence.splice(index, 1);
-                var length = self.state_change_listeners.length;
-                var i;
+                let length = self.state_change_listeners.length;
+                let i;
                 for (i = 0; i < length; i++) {
                     self.state_change_listeners[i]();
                 }
@@ -331,10 +333,10 @@
 
         self.blur_event = function (e) {
             e.preventDefault();
-            var keys = Object.keys(self.state);
-            var length = keys.length;
-            var i;
-            var key;
+            let keys = Object.keys(self.state);
+            let length = keys.length;
+            let i;
+            let key;
 
             for (i = 0; i < length; i++) {
                 key = keys[i];
@@ -351,8 +353,8 @@
         self.bind();
     }
 
-    var Keyboard = function (options) {
-        var self = this;
+    let Keyboard = function (options) {
+        let self = this;
         initialize(self);
         self.element = options.element || null;
         self.key_sequence = [];
@@ -362,26 +364,25 @@
         self.propagate = options.propagate || [];
     };
 
-    var keys = Object.keys(letter_codes);
-    var length = keys.length;
-    var i;
+    let keys = Object.keys(letter_codes);
+    let length = keys.length;
+    let i;
     for (i = 0; i < length; i++) {
-        var key = keys[i];
+        let key = keys[i];
         Keyboard[key] = letter_codes[key];
     }
 
-
     Keyboard.prototype.addShortcutListener = function (str, callback) {
-        var self = this;
+        let self = this;
         str = cleanShortcut(str);
-        var shortcut = shortcutToKeycode(str);
+        let shortcut = shortcutToKeycode(str);
 
-        var sc = {
+        let sc = {
             shortcut: shortcut,
             callback: callback
         };
 
-        if (indexOfShortcut(sc, self.shortcut_listeners) == -1) {
+        if (indexOfShortcut(sc, self.shortcut_listeners) === -1) {
             self.shortcut_listeners.push(sc);
         }
         else {
@@ -390,35 +391,35 @@
     };
 
     Keyboard.prototype.removeShortcutListener = function (shortcut, callback) {
-        var self = this;
-        var sc = {
+        let self = this;
+        let sc = {
             shortcut: shortcut,
             callback: callback
         };
-        var index = indexOfShortcut(sc, self.shortcut_listeners);
-        if (index != -1) {
+        let index = indexOfShortcut(sc, self.shortcut_listeners);
+        if (index !== -1) {
             self.shortcut_listeners.splice(index, 1);
         }
     };
 
     Keyboard.prototype.addStateChangeListener = function (callback) {
-        var self = this;
-        if (self.state_change_listeners.indexOf(callback) == -1) {
+        let self = this;
+        if (self.state_change_listeners.indexOf(callback) === -1) {
             self.state_change_listeners.push(callback);
         }
     };
 
     Keyboard.prototype.removeStateChangeListener = function (callback) {
-        var self = this;
-        var index = self.state_change_listeners.indexOf(callback);
-        if (index != -1) {
+        let self = this;
+        let index = self.state_change_listeners.indexOf(callback);
+        if (index !== -1) {
             self.state_change_listeners.splice(index, 1);
         }
     };
 
     Keyboard.prototype.unbind = function(){
-        var self = this;
-        var element = self.element;
+        let self = this;
+        let element = self.element;
         if(element != null){
             element.removeEventListener('click', self.click_event);
             element.removeEventListener('keydown', self.keydown_event);
@@ -430,9 +431,9 @@
     };
 
     Keyboard.prototype.bind = function(){
-        var self = this;
+        let self = this;
         self.unbind();
-        var element = self.element;
+        let element = self.element;
         if(element != null){
             element.setAttribute('tabindex', 1);
             element.addEventListener('click', self.click_event);
