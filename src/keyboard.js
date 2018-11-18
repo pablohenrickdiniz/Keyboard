@@ -113,43 +113,12 @@
      */
     function sequenceContainsNumeric(code, sequence) {
         let length = sequence.length;
-        for (i = 0; i < length; i++) {
+        for (let i = 0; i < length; i++) {
             if (getCodeNumber(sequence[i]) === getCodeNumber(code)) {
                 return true;
             }
         }
         return false;
-    }
-
-    /**
-     *
-     * @param string
-     * @returns {string}
-     */
-    function  cleanShortcut(string) {
-        return string.replace(/\s/g, '').toUpperCase();
-    }
-
-    /**
-     *
-     * @param shortcut
-     * @returns {Array}
-     */
-    function shortcutToKeycode(shortcut) {
-        let keySequence = [];
-        let letter_keys = Object.keys(letter_codes);
-        shortcut = shortcut.split('+');
-        let length = shortcut.length;
-        let i;
-        for (i = 0; i < length; i++) {
-            if (numeric_codes[shortcut[i]] !== undefined) {
-                keySequence.push(numeric_codes[shortcut[i]]);
-            }
-            else if (letter_keys.indexOf(shortcut[i]) !== -1) {
-                keySequence.push(letter_codes[shortcut[i]]);
-            }
-        }
-        return keySequence;
     }
 
     /**
@@ -199,48 +168,6 @@
 
     /**
      *
-     * @param shortcutA
-     * @param shortcutB
-     * @returns {boolean}
-     */
-    function compareShortcut(shortcutA, shortcutB) {
-        let lengthA = shortcutA.length;
-        let lengthB = shortcutB.length;
-
-        if (lengthA !== lengthB) {
-            return false;
-        }
-
-        for (i = 0; i < lengthA && i < lengthB; i++) {
-            if (((isNumericCode(shortcutA[i]) || isNumericCode(shortcutB[i])) && (getCodeNumber(shortcutA[i]) !== getCodeNumber(shortcutB[i])) || shortcutA[i] !== shortcutB[i])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     *
-     * @param sca
-     * @param array
-     * @returns {number}
-     */
-    function indexOfShortcut(sca, array) {
-        let length = array.length;
-        let scb = null;
-
-        for (i = 0; i < length; i++) {
-            scb = array[i];
-            if (sca.callback === scb.callback && compareShortcut(sca.shortcut, scb.shortcut)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     *
      * @param self
      */
     function initialize(self) {
@@ -265,7 +192,7 @@
              * @returns {string}
              */
             get:function(){
-                return keySequenceToShortcut(self.key_sequence)
+                return keySequenceToShortcut(self.keySequence)
             }
         });
 
@@ -279,38 +206,27 @@
                 e.preventDefault();
             }
 
-            if (self.state[which] !== true) {
+            if (!self.state[which]) {
                 self.state[which] = true;
-                let i;
-                let length;
-
+                let eventName = ['state',keyCodeToName(which),'active'].join();
+                self.trigger(eventName,[]);
                 let changed = false;
-
                 if (isNumericCode(which)) {
-                    if (!sequenceContainsNumeric(which, self.key_sequence)) {
-                        self.key_sequence.push(which);
+                    if (!sequenceContainsNumeric(which, self.keySequence)) {
+                        self.keySequence.push(which);
                         changed = true;
                     }
                 }
                 else {
-                    if (self.key_sequence.indexOf(which) === -1) {
-                        self.key_sequence.push(which);
+                    if (self.keySequence.indexOf(which) === -1) {
+                        self.keySequence.push(which);
                         changed = true;
                     }
                 }
 
                 if (changed) {
-                    length = self.state_change_listeners.length;
-                    for (i = 0; i < length; i++) {
-                        self.state_change_listeners[i]();
-                    }
-                }
-
-                length = self.shortcut_listeners.length;
-                for (i = 0; i < length; i++) {
-                    let shortcut_callback = self.shortcut_listeners[i];
-                    if (compareShortcut(shortcut_callback.shortcut, self.key_sequence)) {
-                        shortcut_callback.callback();
+                    if(self.keySequence.length > 1){
+                        self.trigger(['shortcut',keySequenceToShortcut(self.keySequence)].join(','),[]);
                     }
                 }
             }
@@ -319,14 +235,12 @@
         self.keyup_event = function (e) {
             let which = e.which;
             e.preventDefault();
-            self.state[which] = false;
-            let index = self.key_sequence.indexOf(which);
-            if (index !== -1) {
-                self.key_sequence.splice(index, 1);
-                let length = self.state_change_listeners.length;
-                let i;
-                for (i = 0; i < length; i++) {
-                    self.state_change_listeners[i]();
+            if(self.state[which]){
+                self.state[which] = false;
+                self.trigger(['state',keyCodeToName(which),'inactive'].join(),[]);
+                let index = self.keySequence.indexOf(which);
+                if (index !== -1) {
+                    self.keySequence.splice(index, 1);
                 }
             }
         };
@@ -337,19 +251,13 @@
             let length = keys.length;
             let i;
             let key;
-
             for (i = 0; i < length; i++) {
                 key = keys[i];
                 self.state[key] = false;
+                self.trigger(['state',keyCodeToName(key),'inactive'].join(','),[]);
             }
-
-            self.key_sequence = [];
-            length = self.state_change_listeners.length;
-            for (i = 0; i < length; i++) {
-                self.state_change_listeners[i]();
-            }
+            self.keySequence = [];
         };
-
         self.bind();
     }
 
@@ -357,11 +265,10 @@
         let self = this;
         initialize(self);
         self.element = options.element || null;
-        self.key_sequence = [];
-        self.shortcut_listeners = [];
-        self.state_change_listeners = [];
+        self.keySequence = [];
         self.state = {};
         self.propagate = options.propagate || [];
+        self.listeners = [];
     };
 
     let keys = Object.keys(letter_codes);
@@ -372,49 +279,64 @@
         Keyboard[key] = letter_codes[key];
     }
 
-    Keyboard.prototype.addShortcutListener = function (str, callback) {
+    /**
+     *
+     * @param eventName {string}
+     * @param callback function}
+     * @returns {Keyboard}
+     */
+    Keyboard.prototype.on = function(eventName,callback){
         let self = this;
-        str = cleanShortcut(str);
-        let shortcut = shortcutToKeycode(str);
-
-        let sc = {
-            shortcut: shortcut,
-            callback: callback
-        };
-
-        if (indexOfShortcut(sc, self.shortcut_listeners) === -1) {
-            self.shortcut_listeners.push(sc);
+        if(typeof callback === 'function'){
+            if(self.listeners[eventName] === undefined){
+                self.listeners[eventName] = [];
+            }
+            if(self.listeners.indexOf(callback) === -1){
+                self.listeners[eventName].push(callback);
+            }
         }
-        else {
-            console.error('This callback is already registered with shortcut \'' + str + '\'');
-        }
+        return self;
     };
 
-    Keyboard.prototype.removeShortcutListener = function (shortcut, callback) {
+    /**
+     *
+     * @param eventName
+     * @param callback
+     * @returns {Keyboard}
+     */
+    Keyboard.prototype.off = function(eventName,callback){
         let self = this;
-        let sc = {
-            shortcut: shortcut,
-            callback: callback
-        };
-        let index = indexOfShortcut(sc, self.shortcut_listeners);
-        if (index !== -1) {
-            self.shortcut_listeners.splice(index, 1);
+        if(self.listeners[eventName] !== undefined){
+            if(typeof callback === 'function'){
+                let index = self.listeners[eventName].indexOf(callback);
+                if(index !== -1){
+                    self.listeners[eventName].splice(index,1);
+                }
+                if(self.listeners[eventName].length === 0){
+                    delete self.listeners[eventName];
+                }
+            }
+            else{
+                delete self.listeners[eventName];
+            }
         }
+        return self;
     };
 
-    Keyboard.prototype.addStateChangeListener = function (callback) {
+    /**
+     *
+     * @param eventName
+     * @param args
+     * @returns {Keyboard}
+     */
+    Keyboard.prototype.trigger = function(eventName, args){
         let self = this;
-        if (self.state_change_listeners.indexOf(callback) === -1) {
-            self.state_change_listeners.push(callback);
+        if(self.listeners[eventName] !== undefined){
+            for(let i = 0;i < self.listeners[eventName].length;i++){
+                self.listeners[eventName][i].apply(null,args);
+            }
         }
-    };
-
-    Keyboard.prototype.removeStateChangeListener = function (callback) {
-        let self = this;
-        let index = self.state_change_listeners.indexOf(callback);
-        if (index !== -1) {
-            self.state_change_listeners.splice(index, 1);
-        }
+        return self;
     };
 
     Keyboard.prototype.unbind = function(){
