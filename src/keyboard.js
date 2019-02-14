@@ -1,4 +1,3 @@
-'use strict';
 (function (w) {
     let letter_codes = {
         BACK_TAB: 8,
@@ -209,7 +208,7 @@
             if (!self.state[which]) {
                 self.state[which] = true;
                 let eventName = ['state',keyCodeToName(which),'active'].join();
-                self.trigger(eventName,[]);
+                self.trigger(eventName);
                 let changed = false;
                 if (isNumericCode(which)) {
                     if (!sequenceContainsNumeric(which, self.keySequence)) {
@@ -226,7 +225,7 @@
 
                 if (changed) {
                     if(self.keySequence.length > 1){
-                        self.trigger(['shortcut',keySequenceToShortcut(self.keySequence)].join(','),[]);
+                        self.trigger(['shortcut',keySequenceToShortcut(self.keySequence)].join(','));
                     }
                 }
             }
@@ -237,7 +236,7 @@
             e.preventDefault();
             if(self.state[which]){
                 self.state[which] = false;
-                self.trigger(['state',keyCodeToName(which),'inactive'].join(),[]);
+                self.trigger(['state',keyCodeToName(which),'inactive'].join());
                 let index = self.keySequence.indexOf(which);
                 if (index !== -1) {
                     self.keySequence.splice(index, 1);
@@ -254,7 +253,7 @@
             for (i = 0; i < length; i++) {
                 key = keys[i];
                 self.state[key] = false;
-                self.trigger(['state',keyCodeToName(key),'inactive'].join(','),[]);
+                self.trigger(['state',keyCodeToName(key),'inactive'].join(','));
             }
             self.keySequence = [];
         };
